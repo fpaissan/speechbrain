@@ -30,7 +30,7 @@ valid_ratio: 0.2
 number_of_epochs: 500 # number of training epochs
 max_increase_epochs: 50  # early stop when after consecutive "max_increase_epochs" epochs there is no improvement
 num_warmup_epochs: 5  # start checking for early stopping after first "num_warmup_epochs"
-target_valid_metric: 'f1'  # target metric to track while performing early stopping
+target_valid_metric: 'acc'  # target metric to track while performing early stopping
 direction: 'max'  # direction to optimize the target metric
 batch_size: 32
 lr: 0.001
