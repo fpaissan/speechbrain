@@ -1,5 +1,5 @@
 from ssvep_brain import Wang2016Brain
-from torch.nn import init
+import speechbrain as sb
 
 def run_single_fold(hparams: dict, run_opts: dict, datasets: dict) -> dict:
     """Performs training and evaluation on single a fold.
@@ -72,15 +72,3 @@ def run_single_fold(hparams: dict, run_opts: dict, datasets: dict) -> dict:
     }
     
     return tmp_metrics_dict
-
-def initialize_module(module):
-    """Function to initialize neural network modules"""
-    for mod in module.modules():
-        if hasattr(mod, "weight"):
-            if not ("BatchNorm" in mod.__class__.__name__):
-                init.xavier_uniform_(mod.weight, gain=1)
-            else:
-                init.constant_(mod.weight, 1)
-        if hasattr(mod, "bias"):
-            if mod.bias is not None:
-                init.constant_(mod.bias, 0)

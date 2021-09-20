@@ -1,9 +1,21 @@
 from sklearn.metrics import confusion_matrix, f1_score, roc_auc_score, accuracy_score
 from speechbrain.core import Stage
-from ssvep_utils import initialize_module
+from torch.nn import init
 from torch import Tensor
 import speechbrain as sb
 import torch
+
+def initialize_module(module):
+    """Function to initialize neural network modules"""
+    for mod in module.modules():
+        if hasattr(mod, "weight"):
+            if not ("BatchNorm" in mod.__class__.__name__):
+                init.xavier_uniform_(mod.weight, gain=1)
+            else:
+                init.constant_(mod.weight, 1)
+        if hasattr(mod, "bias"):
+            if mod.bias is not None:
+                init.constant_(mod.bias, 0)
 
 class Wang2016Brain(sb.Brain):
     """Brain to solve SSVEP on Wang2016 benchmark"""

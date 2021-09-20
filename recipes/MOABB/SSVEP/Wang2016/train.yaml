@@ -14,15 +14,15 @@ output_folder: '/home/fpaissan/code/speechbrain-1/recipes/MOABB/MotorImagery_dec
 # DATASET HPARS
 C: 22
 # Target sampling rate while downsampling
-sf: 128
+sf: 250
 # tmin, tmax respect to stimulus onset to define EEG epochs
-tmin: 0.5
-tmax: 2.5
+tmin: 0
+tmax: 6
 # fmin, fmax band-pass filtering
-fmin: 4
-fmax: 40
+fmin: 7
+fmax: 45
 # Time samples=int((tmax-tmin)*sf)
-T: 256
+T: 1500
 
 # TRAINING HPARS
 nfolds: 5
@@ -35,7 +35,8 @@ direction: 'max'  # direction to optimize the target metric
 batch_size: 32
 lr: 0.001
 loss: !name:torch.nn.functional.nll_loss
-class_weight: [1, 1, 1, 1]  # class weight to address class imbalance
+num_classes: 40
+class_weight: [1]  # class weight to address class imbalance, single value bc is multiplied in python
 optimizer: !name:torch.optim.Adam
   lr: !ref <lr>
 epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounterWithStopper  # epoch counter and early stopper
