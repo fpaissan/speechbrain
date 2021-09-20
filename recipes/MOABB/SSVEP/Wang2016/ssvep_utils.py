@@ -1,5 +1,6 @@
 from ssvep_brain import Wang2016Brain
 import speechbrain as sb
+import os
 
 def run_single_fold(hparams: dict, run_opts: dict, datasets: dict) -> dict:
     """Performs training and evaluation on single a fold.

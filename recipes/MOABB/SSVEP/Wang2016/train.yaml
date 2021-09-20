@@ -9,7 +9,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 
 # DIRECTORIES
 data_folder: !PLACEHOLDER  #'/path/to/MOABB_BNCI2014001'
-output_folder: '/Users/paissanfrancesco/PycharmProjects/speechbrain/recipes/MOABB/SSVEP/Wang2016/results' #!ref results/MOABB_BNCI2014001/<seed>
+output_folder: '/home/fpaissan/code/speechbrain/recipes/MOABB/SSVEP/Wang2016/results' #!ref results/MOABB_BNCI2014001/<seed>
 
 # DATASET HPARS
 C: 22
@@ -116,7 +116,7 @@ avgpool3: !new:speechbrain.nnet.pooling.Pooling2d
 
 layer4: !new:speechbrain.nnet.linear.LinearWithConstraint
   input_size: !ref <k3> * <T> // <fptot>
-  n_neurons: 4  # 4 output neurons
+  n_neurons: !ref <num_classes>  # 4 output neurons
   max_norm: !ref <max_norm_out>
   bias: True
 
@@ -124,22 +124,22 @@ model: !new:speechbrain.nnet.containers.Sequential
   - !ref <layer0>
   - !ref <bnorm0>
 
-  - !ref <layer1>
-  - !ref <bnorm1>
-  - !ref <avgpool1>
-  - !new:torch.nn.Dropout
-    p: !ref <p_drop>
-  - !new:torch.nn.ELU
+  # - !ref <layer1>
+  # - !ref <bnorm1>
+  # - !ref <avgpool1>
+  # - !new:torch.nn.Dropout
+  #   p: !ref <p_drop>
+  # - !new:torch.nn.ELU
 
-  - !ref <layer2>
-  - !ref <layer3>
-  - !ref <bnorm3>
-  - !ref <avgpool3>
-  - !new:torch.nn.Dropout
-    p: !ref <p_drop>
-  - !new:torch.nn.ELU
+  # - !ref <layer2>
+  # - !ref <layer3>
+  # - !ref <bnorm3>
+  # - !ref <avgpool3>
+  # - !new:torch.nn.Dropout
+  #   p: !ref <p_drop>
+  # - !new:torch.nn.ELU
 
-  - !new:torch.nn.Flatten
-  - !ref <layer4>
-  - !new:torch.nn.LogSoftmax
-    dim: 1
+  # - !new:torch.nn.Flatten
+  # - !ref <layer4>
+  # - !new:torch.nn.LogSoftmax
+  #   dim: 1

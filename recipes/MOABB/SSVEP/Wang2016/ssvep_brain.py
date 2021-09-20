@@ -33,8 +33,12 @@ class Wang2016Brain(sb.Brain):
         :return: output of NN model
         :rtype: Tensor
         """
-        inputs = batch[0].to(self.device)   #why is there a 0 here?
-        return self.modules.model(inputs)
+        inputs = batch[0].to(self.device)
+        inputs = inputs.permute(0, 3, 1, 2)
+        input(self.modules.model)
+        out = self.modules.model(inputs)
+        input(out.shape)
+        return out
 
     def compute_objectives(self, 
                            predictions: Tensor, 
@@ -53,6 +57,7 @@ class Wang2016Brain(sb.Brain):
         :rtype: Tensor
         """
         targets = batch[1].to(self.device)
+        # input(f"{predictions.shape} - {targets.shape}")
         loss = self.hparams.loss(
             predictions,
             targets,
