@@ -33,7 +33,7 @@ if __name__ == "__main__":
     hparams_file, run_opts, overrides = sb.core.parse_arguments(argv)
     with open(hparams_file) as fin:
         hparams = load_hyperpyyaml(fin, overrides)
-    
+
     hparams["class_weight"] = hparams["class_weight"]*hparams["num_classes"] 
 
     moabb_dataset = Wang2016()
@@ -48,31 +48,31 @@ if __name__ == "__main__":
     )
     
     
-    # # defining data iterators to use
-    # data_its = [
-    #     WithinSession(moabb_paradigm, hparams),
-    #     CrossSession(moabb_paradigm, hparams),
-    #     LeaveOneSubjectOut(moabb_paradigm, hparams),
-    # ]
-    # for data_it in data_its:
-    #     print("Running {0} iterations".format(data_it.iterator_tag))
-    #     for i, (exp_dir, datasets) in enumerate(data_it.prepare(moabb_dataset)):
-    #         print("Running experiment %i" % (i))
-    #         hparams["exp_dir"] = exp_dir
-    #         # creating experiment directory
-    #         sb.create_experiment_directory(
-    #             experiment_directory=hparams["exp_dir"],
-    #             hyperparams_to_save=hparams_file,
-    #             overrides=overrides,
-    #         )
-    #         tmp_metrics_dict = run_single_fold(hparams, run_opts, datasets)
-    #         # saving metrics on the test set in a pickle file
-    #         metrics_fpath = os.path.join(hparams["exp_dir"], "metrics.pkl")
-    #         with open(metrics_fpath, "wb",) as handle:
-    #             pickle.dump(
-    #                 tmp_metrics_dict, handle, protocol=pickle.HIGHEST_PROTOCOL
-    #             )
-    #         # restoring hparams for the next training and evaluation processes
-    #         hparams_file, run_opts, overrides = sb.core.parse_arguments(argv)
-    #         with open(hparams_file) as fin:
-    #             hparams = load_hyperpyyaml(fin, overrides)
+    # defining data iterators to use
+    data_its = [
+        WithinSession(moabb_paradigm, hparams),
+        # CrossSession(moabb_paradigm, hparams),
+        # LeaveOneSubjectOut(moabb_paradigm, hparams),
+    ]
+    for data_it in data_its:
+        print("Running {0} iterations".format(data_it.iterator_tag))
+        for i, (exp_dir, datasets) in enumerate(data_it.prepare(moabb_dataset)):
+            print("Running experiment %i" % (i))
+            hparams["exp_dir"] = exp_dir
+            # creating experiment directory
+            sb.create_experiment_directory(
+                experiment_directory=hparams["exp_dir"],
+                hyperparams_to_save=hparams_file,
+                overrides=overrides,
+            )
+            tmp_metrics_dict = run_single_fold(hparams, run_opts, datasets)
+            # saving metrics on the test set in a pickle file
+            metrics_fpath = os.path.join(hparams["exp_dir"], "metrics.pkl")
+            with open(metrics_fpath, "wb",) as handle:
+                pickle.dump(
+                    tmp_metrics_dict, handle, protocol=pickle.HIGHEST_PROTOCOL
+                )
+            # restoring hparams for the next training and evaluation processes
+            hparams_file, run_opts, overrides = sb.core.parse_arguments(argv)
+            with open(hparams_file) as fin:
+                hparams = load_hyperpyyaml(fin, overrides)

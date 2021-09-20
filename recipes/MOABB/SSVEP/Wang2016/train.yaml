@@ -9,7 +9,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 
 # DIRECTORIES
 data_folder: !PLACEHOLDER  #'/path/to/MOABB_BNCI2014001'
-output_folder: '/home/fpaissan/code/speechbrain-1/recipes/MOABB/MotorImagery_decoding/BNCI2014001/results' #!ref results/MOABB_BNCI2014001/<seed>
+output_folder: '/Users/paissanfrancesco/PycharmProjects/speechbrain/recipes/MOABB/SSVEP/Wang2016/results' #!ref results/MOABB_BNCI2014001/<seed>
 
 # DATASET HPARS
 C: 22
