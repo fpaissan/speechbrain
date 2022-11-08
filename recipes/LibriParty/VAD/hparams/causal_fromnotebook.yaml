@@ -34,19 +34,22 @@ multilang_speech_csv: !ref <save_folder>/multilang_speech.csv
 skip_prep: False # Skip data preparation
 
 # Training parameters
-N_epochs: 100
-lr: 1.0
-lr_final: 0.1
-batch_size: 2
+N_epochs: 200
+lr: 0.01
+lr_final: 0.001
+batch_size: 64
 example_length: 5 # in seconds
 sample_rate: 16000
 time_resolution: 0.01 # in seconds
 train_dataloader_opts:
     batch_size: !ref <batch_size>
+    num_workers: 4
 valid_dataloader_opts:
     batch_size: !ref <batch_size>
+    num_workers: 4
 test_dataloader_opts:
     batch_size: !ref <batch_size>
+    num_workers: 4
 
 # Feature parameters
 n_fft: 400
@@ -88,24 +91,24 @@ add_noise_musan: !new:speechbrain.lobes.augment.EnvCorrupt
     babble_prob: 0.0
     reverb_prob: 0.0
     noise_prob: 1.0
-    noise_snr_low: -15
-    noise_snr_high: -20
+    noise_snr_low: -5
+    noise_snr_high: -15
 
 add_music_musan: !new:speechbrain.lobes.augment.EnvCorrupt
     noise_csv: !ref <music_csv>
     babble_prob: 0.0
     reverb_prob: 0.0
     noise_prob: 1.0
-    noise_snr_low: -15
-    noise_snr_high: -20
+    noise_snr_low: -5
+    noise_snr_high: -15
 
 add_speech_musan: !new:speechbrain.lobes.augment.EnvCorrupt
     noise_csv: !ref <speech_csv>
     babble_prob: 0.0
     reverb_prob: 0.0
     noise_prob: 1.0
-    noise_snr_low: -15
-    noise_snr_high: -20
+    noise_snr_low: -5
+    noise_snr_high: -15
 
 # add_speech_multilang: !new:speechbrain.lobes.augment.EnvCorrupt
 #    noise_csv: !ref <multilang_speech_csv>
@@ -124,7 +127,7 @@ compute_features: !new:speechbrain.lobes.features.Fbank
     hop_length: !ref <time_resolution> * 1000 # in ms
 
 mean_var_norm: !new:speechbrain.processing.features.InputNormalization
-    norm_type: sentence
+    norm_type: global
 
 cnn: !new:speechbrain.nnet.containers.Sequential
   input_shape: [null, null, 40]
@@ -163,10 +166,10 @@ modules:
     dnn: !ref <dnn>
     mean_var_norm: !ref <mean_var_norm>
 
-opt_class: !name:torch.optim.Adadelta
+opt_class: !name:torch.optim.Adam
     lr: !ref <lr>
-    rho: 0.95
-    eps: 1.e-8
+    # rho: 0.95
+    # eps: 1.e-8
 
 epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounter
     limit: !ref <N_epochs>

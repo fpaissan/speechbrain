@@ -30,7 +30,7 @@ import speechbrain as sb
 from hyperpyyaml import load_hyperpyyaml
 from speechbrain.utils.distributed import run_on_main
 from data_augment import augment_data
-import wandb
+# import # wandb
 
 logger = logging.getLogger(__name__)
 
@@ -75,18 +75,21 @@ class VADBrain(sb.Brain):
     def compute_objectives(self, predictions, batch, stage):
         "Given the network predictions and targets computed the binary CE"
         predictions, lens = predictions
-        targets = self.targets
+        targets = self.targets #[:, : self.targets.shape[-1] - 1]
 
-        predictions = predictions[:, : targets.shape[-1], 0]
+        # print(targets.shape, predictions.shape)
+        # input()
+        
+        predictions = predictions[:, : targets.shape[-1] - 1, 0]
 
         loss = self.hparams.compute_BCE_cost(predictions, targets, lens)
 
-        self.train_metrics.append(batch.id, torch.sigmoid(predictions), targets)
-        if stage != sb.Stage.TRAIN:
-            self.valid_metrics.append(
-                batch.id, torch.sigmoid(predictions), targets
-            )
-        wandb.log({"run/%s/batch" % stage: loss})
+        # self.train_metrics.append(batch.id, torch.sigmoid(predictions), targets)
+        # if stage != sb.Stage.TRAIN:
+        #     self.valid_metrics.append(
+        #         batch.id, torch.sigmoid(predictions), targets
+        #     )
+        # wandb.log({"run/%s/batch" % stage: loss})
         return loss
 
     def on_stage_start(self, stage, epoch=None):
@@ -111,29 +114,29 @@ class VADBrain(sb.Brain):
         """Gets called at the end of a stage."""
         if stage == sb.Stage.TRAIN:
             self.train_loss = stage_loss
-        else:
-            summary = self.valid_metrics.summarize(threshold=0.5)
+        # else:
+        #     summary = self.valid_metrics.summarize(threshold=0.5)
 
-        if stage == sb.Stage.VALID:
-            old_lr, new_lr = self.hparams.lr_annealing(epoch)
-            sb.nnet.schedulers.update_learning_rate(self.optimizer, new_lr)
-            self.hparams.train_logger.log_stats(
-                stats_meta={"epoch": epoch, "lr": old_lr},
-                train_stats={"loss": self.train_loss},
-                valid_stats={"loss": stage_loss, "summary": summary},
-            )
-            self.checkpointer.save_and_keep_only(
-                meta={"loss": stage_loss, "summary": summary},
-                num_to_keep=1,
-                min_keys=["loss"],
-                name="epoch_{}".format(epoch),
-            )
+        # if stage == sb.Stage.VALID:
+        #     old_lr, new_lr = self.hparams.lr_annealing(epoch)
+        #     sb.nnet.schedulers.update_learning_rate(self.optimizer, new_lr)
+        #     self.hparams.train_logger.log_stats(
+        #         stats_meta={"epoch": epoch, "lr": old_lr},
+        #         train_stats={"loss": self.train_loss},
+        #         valid_stats={"loss": stage_loss, "summary": summary},
+        #     )
+        #     self.checkpointer.save_and_keep_only(
+        #         meta={"loss": stage_loss, "summary": summary},
+        #         num_to_keep=1,
+        #         min_keys=["loss"],
+        #         name="epoch_{}".format(epoch),
+        #     )
 
-        elif stage == sb.Stage.TEST:
-            self.hparams.train_logger.log_stats(
-                stats_meta={"Epoch loaded": self.hparams.epoch_counter.current},
-                test_stats={"loss": stage_loss, "summary": summary},
-            )
+        # elif stage == sb.Stage.TEST:
+        #     self.hparams.train_logger.log_stats(
+        #         stats_meta={"Epoch loaded": self.hparams.epoch_counter.current},
+        #         test_stats={"loss": stage_loss, "summary": summary},
+        #     )
 
 
 def dataio_prep(hparams):
@@ -203,7 +206,7 @@ def dataio_prep(hparams):
 
 # Begin Recipe!
 if __name__ == "__main__":
-    wandb.init(project="reVAD", entity="ffpais")
+    # # wandb.init(project="reVAD", entity="ffpais")
 
     # CLI:
     hparams_file, run_opts, overrides = sb.parse_arguments(sys.argv[1:])
@@ -212,7 +215,7 @@ if __name__ == "__main__":
     with open(hparams_file) as fin:
         hparams = load_hyperpyyaml(fin, overrides)
 
-    wandb.config = hparams
+    # wandb.config = hparams
 
     # Initialize ddp (useful only for multi-GPU DDP training)
     sb.utils.distributed.ddp_init_group(run_opts)
@@ -275,7 +278,7 @@ if __name__ == "__main__":
         checkpointer=hparams["checkpointer"],
     )
 
-    wandb.watch(vad_brain)
+    # # wandb.watch([hparams["modules"]["cnn"], hparams["modules"]["rnn"], hparams["modules"]["dnn"]], log='all', log_freq=100)
 
     # Training/validation loop
     vad_brain.fit(
