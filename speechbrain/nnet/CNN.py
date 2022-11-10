@@ -614,14 +614,6 @@ class Conv2d(nn.Module):
             bias=bias,
         )
 
-        if self.padding == "causal":
-            self.k_mask = (
-                torch.ones_like(self.conv.weight)
-                .float()
-            )
-            self.k_mask[:, :, -(self.k_mask.shape[2] // 2) :, :] = 0.0
-            self.k_mask = self.k_mask.to(device=self.conv.weight.device)
-
         if conv_init == "kaiming":
             nn.init.kaiming_normal_(self.conv.weight)
 
@@ -643,11 +635,15 @@ class Conv2d(nn.Module):
         if self.unsqueeze:
             x = x.unsqueeze(1)
 
-        if self.padding == "same" or self.padding == "causal":
+        if self.padding == "same":
             x = self._manage_padding(
                 x, self.kernel_size, self.dilation, self.stride
             )
-
+        
+        elif self.padding == "causal":
+            num_pad = (self.kernel_size[1] - 1) * self.dilation[1]
+            x = F.pad(x, (0, 0, num_pad, 0))
+            
         elif self.padding == "valid":
             pass
 
@@ -656,8 +652,6 @@ class Conv2d(nn.Module):
                 "Padding must be 'same' or 'valid'. Got " + self.padding
             )
 
-        if self.padding == "causal":
-            self.conv.weight.data = self.conv.weight.data * self.k_mask.to(device=self.conv.weight.data.device)
         wx = self.conv(x)
 
         if self.unsqueeze:
