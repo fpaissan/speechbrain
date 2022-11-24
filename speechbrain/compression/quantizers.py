@@ -4,8 +4,7 @@ Authors:
     * Francesco Paissan, 2022
 """
 import torch
-from torch.ao.quantization.qconfig_mapping import QConfigMapping
-import torch.quantization.quantize_fx as quantize_fx
+from torch.quantization.quantize_fx import prepare_fx, convert_fx
 import copy
 
 import speechbrain as sb
@@ -17,6 +16,7 @@ class PostTrainingQuantization():
         self,
         quantization_type: str,
         modules_to_quantize: list[str],
+        input_shapes: dict,
         qconfig_dict: dict = {"": torch.quantization.get_default_qconfig(backend)},
         isInterface: bool = True,
     ) -> None:
@@ -24,35 +24,40 @@ class PostTrainingQuantization():
         self.qconfig_dict = qconfig_dict
         self.modules_to_quantize = modules_to_quantize
         self.isInterface = isInterface
+        self.input_shapes = input_shapes
 
     def _static_quantize(self, brain):
         pass
 
     def _dynamic_quantize(self, brain):
-        if self.isInterface:
+        if not self.isInterface:
             if self.modules_to_quantize == "all":
-                self.modules_to_quantize = list(brain.mods.keys())
+                self.modules_to_quantize = list(brain.modules.keys())
 
             for module_name in self.modules_to_quantize:
-                model_to_quantize = copy.deepcopy(brain.mods[module_name])
+                if "norm" in module_name:
+                    continue
+                
+                model_to_quantize = copy.deepcopy(brain.modules[module_name])
                 model_to_quantize.eval()
-
+                
+                dummy = torch.randn(self.input_shapes[module_name])
+                
                 # a tuple of one or more example inputs are needed to trace the model
-
+                breakpoint()
                 # prepare
-                model_prepared = quantize_fx.prepare_fx(
+                model_prepared = prepare_fx(
                     model_to_quantize,
                     self.qconfig_dict,
-                    None
+                    dummy
                 )
 
+                breakpoint()                
                 # no calibration needed when we only have dynamic/weight_only quantization
                 # quantize
-                model_quantized = quantize_fx.convert_fx(model_prepared)
+                model_quantized = convert_fx(model_prepared)
 
-                import pdb; pdb.set_trace()
-
-                brain.mods[module_name] = model_quantized
+                brain.modules[module_name] = model_quantized
 
         return brain
 
