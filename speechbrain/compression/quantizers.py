@@ -58,10 +58,3 @@ def quantize(modules: List[nn.Module], data=None, quant_type="dynamic") -> List[
         quantized_modules.append(model_quantized)
 
     return quantized_modules
-    if quant_type == "dynamic":
-        return _dynamic_quantize(modules)
-    elif quant_type == "static":
-        return _static_quantize(modules, data)
-    else:
-        raise NotImplemented()
-
