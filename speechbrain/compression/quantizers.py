@@ -26,55 +26,42 @@ def _prepare_model(mod, quant_type):
         None
     )
 
-def _static_quantize(modules, data):
-    assert data != None, "Can't quantize without calibration data for Post Training static quantization."
-    if not isinstance(modules, list):
-        modules = [modules]
-    
-    quantized_modules = []
-
-    for m in modules:
-        # prepare
-        model_prepared = _prepare_model(m, "static")
-        
-        # calibrate activations
-        model_prepared.eval()
-        with torch.no_grad():
-            model_prepared(data)
-        
-        # quantize
-        model_quantized = convert_fx(model_prepared)
-
-        quantized_modules.append(model_quantized)
-
-    return quantized_modules
-
-def _dynamic_quantize(modules):
-    if not isinstance(modules, list):
-        modules = [modules]
-    
-    quantized_modules = []
-
-    for m in modules:
-        # prepare
-        model_prepared = _prepare_model(m, "dynamic")
-        
-        # quantize
-        model_quantized = convert_fx(model_prepared)
-
-        quantized_modules.append(model_quantized)
-
-    return quantized_modules
-
-
 def quantize(modules: List[nn.Module], data=None, quant_type="dynamic") -> List[nn.Module]:
     """Quantizes the modules of the brain.
     """
+    assert quant_type in ["static", "dynamic"], \
+        f"{quant_type} is not supported. Please refer to the documentation."
     
+    if data == None and quant_type != "dynamic":
+        raise NotImplemented(
+            f"{quant_type} is not supported. Refer to the docs for the list of supported quantization types."
+        )
+    
+    if not isinstance(modules, list):
+        modules = [modules]
+    
+    quantized_modules = []
+
+    for m in modules:
+        # prepare
+        model_prepared = _prepare_model(m, quant_type)
+        
+        # calibrate activations
+        if quant_type == "static":
+            model_prepared.eval()
+            with torch.no_grad():
+                model_prepared(data)
+        
+        # quantize
+        model_quantized = convert_fx(model_prepared)
+
+        quantized_modules.append(model_quantized)
+
+    return quantized_modules
     if quant_type == "dynamic":
         return _dynamic_quantize(modules)
     elif quant_type == "static":
         return _static_quantize(modules, data)
     else:
-        raise NotImplemented(f"Unknown quantization type {quant_type}.")
+        raise NotImplemented()
 
