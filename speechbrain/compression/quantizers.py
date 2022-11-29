@@ -5,73 +5,56 @@ Authors:
 """
 import torch
 from torch.quantization.quantize_fx import prepare_fx, convert_fx
+from torch.ao.quantization.qconfig_mapping import QConfigMapping
 import copy
 
 import speechbrain as sb
 
-backend = "fbgemm" # or "qnnpack" for ARM archs
+def _dynamic_quantize(modules):
+    if not isinstance(modules, list):
+        modules = [modules]
+    
+    quantized_modules = []
 
-class PostTrainingQuantization():
-    def __init__(
-        self,
-        quantization_type: str,
-        modules_to_quantize: list[str],
-        input_shapes: dict,
-        qconfig_dict: dict = {"": torch.quantization.get_default_qconfig(backend)},
-        isInterface: bool = True,
-    ) -> None:
-        self.quantization_type = quantization_type
-        self.qconfig_dict = qconfig_dict
-        self.modules_to_quantize = modules_to_quantize
-        self.isInterface = isInterface
-        self.input_shapes = input_shapes
+    for m in modules:
+        model_to_quantize = copy.deepcopy(m)
+        model_to_quantize.eval()
 
-    def _static_quantize(self, brain):
-        pass
+        # a tuple of one or more example inputs are needed to trace the model
+        breakpoint()
 
-    def _dynamic_quantize(self, brain):
-        if not self.isInterface:
-            if self.modules_to_quantize == "all":
-                self.modules_to_quantize = list(brain.modules.keys())
+        # prepare QMapping for dynamic quantization
+        qconfig_mapping = QConfigMapping().set_global(torch.quantization.default_dynamic_qconfig)
 
-            for module_name in self.modules_to_quantize:
-                if "norm" in module_name:
-                    continue
-                
-                model_to_quantize = copy.deepcopy(brain.modules[module_name])
-                model_to_quantize.eval()
-                
-                dummy = torch.randn(self.input_shapes[module_name])
-                
-                # a tuple of one or more example inputs are needed to trace the model
-                breakpoint()
-                # prepare
-                model_prepared = prepare_fx(
-                    model_to_quantize,
-                    self.qconfig_dict,
-                    dummy
-                )
+        # prepare
+        model_prepared = prepare_fx(
+            model_to_quantize,
+            qconfig_mapping,
+            None
+        )
 
-                breakpoint()                
-                # no calibration needed when we only have dynamic/weight_only quantization
-                # quantize
-                model_quantized = convert_fx(model_prepared)
+        breakpoint()          
 
-                brain.modules[module_name] = model_quantized
+        # no calibration needed when we only have dynamic/weight_only quantization
 
-        return brain
+        # quantize
+        model_quantized = convert_fx(model_prepared)
+
+        quantized_modules.append(model_quantized)
+
+    return modules
 
 
-    def quantize(self, brain: sb.Brain) -> sb.Brain:
-        """Quantizes the modules of the brain.
+def quantize(self, brain: sb.Brain) -> sb.Brain:
+    """Quantizes the modules of the brain.
 
-        Returns:
-            brain: the brain to be quantized.
-        """
-        if self.quantization_type == "static":
-            return self._static_quantize(brain)
-        elif self.quantization_type == "dynamic":
-            return self._dynamic_quantize(brain)
-        else:
-            raise ValueError("Unknown quantization type.")
+    Returns:
+        brain: the brain to be quantized.
+    """
+    if self.quantization_type == "static":
+        return self._static_quantize(brain)
+    elif self.quantization_type == "dynamic":
+        return self._dynamic_quantize(brain)
+    else:
+        raise ValueError("Unknown quantization type.")
 
