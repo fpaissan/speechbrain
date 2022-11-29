@@ -7,7 +7,8 @@ import torch
 from torch.quantization.quantize_fx import prepare_fx, convert_fx
 from torch.ao.quantization.qconfig_mapping import QConfigMapping
 import copy
-
+from typing import List
+import torch.nn as nn
 import speechbrain as sb
 
 def _dynamic_quantize(modules):
@@ -20,9 +21,6 @@ def _dynamic_quantize(modules):
         model_to_quantize = copy.deepcopy(m)
         model_to_quantize.eval()
 
-        # a tuple of one or more example inputs are needed to trace the model
-        breakpoint()
-
         # prepare QMapping for dynamic quantization
         qconfig_mapping = QConfigMapping().set_global(torch.quantization.default_dynamic_qconfig)
 
@@ -33,8 +31,6 @@ def _dynamic_quantize(modules):
             None
         )
 
-        breakpoint()          
-
         # no calibration needed when we only have dynamic/weight_only quantization
 
         # quantize
@@ -42,19 +38,16 @@ def _dynamic_quantize(modules):
 
         quantized_modules.append(model_quantized)
 
-    return modules
+    return quantized_modules
 
 
-def quantize(self, brain: sb.Brain) -> sb.Brain:
+def quantize(modules: List[nn.Module], quant_type="dynamic") -> List[nn.Module]:
     """Quantizes the modules of the brain.
-
-    Returns:
-        brain: the brain to be quantized.
     """
-    if self.quantization_type == "static":
-        return self._static_quantize(brain)
-    elif self.quantization_type == "dynamic":
-        return self._dynamic_quantize(brain)
+#    if self.quantization_type == "static":
+#        return self._static_quantize(brain)
+    if quant_type == "dynamic":
+        return _dynamic_quantize(modules)
     else:
-        raise ValueError("Unknown quantization type.")
+        raise NotImplemented(f"Unknown quantization type {quant_type}.")
 
