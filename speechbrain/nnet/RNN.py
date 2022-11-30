@@ -102,6 +102,7 @@ class RNN(torch.nn.Module):
         dropout=0.0,
         re_init=True,
         bidirectional=False,
+        padded_sequence_eval=True
     ):
         super().__init__()
         self.reshape = False
@@ -150,7 +151,7 @@ class RNN(torch.nn.Module):
         self.rnn.flatten_parameters()
 
         # Pack sequence for proper RNN handling of padding
-        if lengths is not None:
+        if lengths is not None and not self.training and self.padded_sequence_eval:
             x = pack_padded_sequence(x, lengths)
 
         # Support custom initial state
@@ -160,7 +161,7 @@ class RNN(torch.nn.Module):
             output, hn = self.rnn(x)
 
         # Unpack the packed sequence
-        if lengths is not None:
+        if lengths is not None and not self.training and self.padded_sequence_eval:
             output = pad_packed_sequence(output)
 
         return output, hn
